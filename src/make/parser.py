@@ -1,9 +1,13 @@
 from typing import List, Tuple, NamedTuple
 
+
 def parse_dependency_line(line: str) -> Tuple[List[str], List[str]]:
+    if ":" not in line:
+        raise ValueError(f"Expected a ':' after '{line}'")
+
     target_str, component_str = line.split(":")
 
-    return (target_str.strip().split(" "), component_str.strip().split(" "))
+    return (target_str.strip().split(), component_str.strip().split())
 
 
 class Rule(NamedTuple):
