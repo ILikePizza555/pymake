@@ -17,18 +17,21 @@ class Rule(NamedTuple):
     recipe: List[str]
 
     @classmethod
-    def parse_rule(cls, lines: List[str], recipe_prefix="\t") -> Tuple["Rule", List[str]]:
+    def parse_rule(cls, lines: List[str], recipe_prefix="\t") -> "Rule":
         """
         Parses a Rule from a list of lines. Assumes the first line is a dependency line.
-        Returns a Rule and the remaining list of lines.
+        Returns a Rule.
         """
         recipe = []
-        targets, components = parse_dependency_line(lines.pop(0))
+        l = lines.pop(0)
+        targets, components = parse_dependency_line(l)
+        if not targets:
+            raise ValueError(f"Expected a target before '{l}'")
 
         while lines and lines[0].startswith(recipe_prefix):
-            recipe.append(lines.pop(0))
+            recipe.append(lines.pop(0).strip())
         
-        return (cls(targets, components, recipe), lines)
+        return cls(targets, components, recipe)
 
 
 # Represents a makefile macro (or variable)
@@ -41,13 +44,13 @@ class Macro(NamedTuple):
     value: str
 
     @classmethod
-    def parse_macro(cls, lines: List[str], macro_op="=") -> Tuple["Macro", List[str]]:
+    def parse_macro(cls, lines: List[str], macro_op="=") -> "Macro":
         """
         Parses a macro from a single line.
-        Returns a Macro object and the remaining lines
+        Returns a Macro object
         """
         line = lines.pop(0)
-        return (cls(*line.partition(macro_op)), lines)
+        return cls(*line.partition(macro_op))
 
 
 def parse_file(f: str) -> list:
