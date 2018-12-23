@@ -55,12 +55,12 @@ SAMPLE_MAKE = """
 .SUFFIXES = .py
 
 sample_target: requirement
-    aaa
-    bbb
+\taaa
+\tbbb
 
 requirement:
-    ccc
-    ddd
+\tccc
+\tddd
 """
 
 SAMPLE_MAKE_EXPECTED = [
