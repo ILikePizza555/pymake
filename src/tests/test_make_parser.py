@@ -1,4 +1,4 @@
-from make.parser import *
+from make.parser import parse_dependency_line, Rule, Macro, parse_file
 import pytest
 
 class TestParseDependencyLine(object):
@@ -42,3 +42,34 @@ class TestParseRule(object):
         rule_lines = ["Invalid depedency line", "\tvalid_recipe.exe"]
         with pytest.raises(ValueError):
             Rule.parse_rule(rule_lines)
+
+
+class TestParseMacro(object):
+    def test_valid(self):
+        line = ["FOOBAR = test.c"]
+        assert Macro.parse_macro(line) == Macro("FOOBAR", "=", "test.c")
+
+
+SAMPLE_MAKE = """
+# Comment
+.SUFFIXES = .py
+
+sample_target: requirement
+    aaa
+    bbb
+
+requirement:
+    ccc
+    ddd
+"""
+
+SAMPLE_MAKE_EXPECTED = [
+    Macro(".SUFFIXES", "=", ".py"), 
+    Rule(["sample_target"], ["requirement"], ["aaa", "bbb"]), 
+    Rule(["requirement"], [], ["ccc", "ddd"])
+]
+
+def test_parse_file():
+    actual = parse_file(SAMPLE_MAKE)
+    
+    assert actual == SAMPLE_MAKE_EXPECTED
