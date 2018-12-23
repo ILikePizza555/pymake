@@ -50,7 +50,7 @@ class Macro(NamedTuple):
         Returns a Macro object
         """
         line = lines.pop(0)
-        return cls(*line.partition(macro_op))
+        return cls(*map(str.strip, line.partition(macro_op)))
 
 
 def parse_file(f: str) -> list:
@@ -64,8 +64,8 @@ def parse_file(f: str) -> list:
             continue
         
         if "=" in lines[0]:
-            rv.append(Macro.parse_macro(lines)[0])
+            rv.append(Macro.parse_macro(lines))
         else:
-            rv.append(Rule.parse_rule(lines)[0])
+            rv.append(Rule.parse_rule(lines))
     
     return rv
