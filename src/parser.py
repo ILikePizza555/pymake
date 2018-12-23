@@ -13,7 +13,7 @@ class Rule(NamedTuple):
     recipe: List[str]
 
     @classmethod
-    def parse_rule(cls, lines: List[str], recipe_prefix="\t") -> Tuple[Rule, List[str]]:
+    def parse_rule(cls, lines: List[str], recipe_prefix="\t") -> Tuple["Rule", List[str]]:
         """
         Parses a Rule from a list of lines. Assumes the first line is a dependency line.
         Returns a Rule and the remaining list of lines.
@@ -37,7 +37,7 @@ class Macro(NamedTuple):
     value: str
 
     @classmethod
-    def parse_macro(cls, lines: List[str], macro_op="=") -> Tuple[Macro, List[str]]:
+    def parse_macro(cls, lines: List[str], macro_op="=") -> Tuple["Macro", List[str]]:
         """
         Parses a macro from a single line.
         Returns a Macro object and the remaining lines
