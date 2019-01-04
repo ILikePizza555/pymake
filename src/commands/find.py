@@ -29,8 +29,8 @@ def determine_behavior(options: List[str]) -> SymlinkBehavior:
 class OperandTokens(Enum):
     OPERAND_NAME = auto()
     OPERAND_VALUE = auto()
-    LPARAM = auto()
-    RPARAM = auto()
+    LPAREN = auto()
+    RPAREN = auto()
     NOT = auto()
     AND = auto()
     OR = auto()
@@ -43,9 +43,9 @@ def tokenize_operands(operand_strings: List[str]) -> List[Tuple[OperandTokens, s
         s = operand_strings.pop(0)
 
         if s == "(":
-            rv.append((OperandTokens.LPARAM, s))
+            rv.append((OperandTokens.LPAREN, s))
         elif s == ")":
-            rv.append((OperandTokens.RPARAM, s))
+            rv.append((OperandTokens.RPAREN, s))
         elif s == "!":
             rv.append((OperandTokens.NOT, s))
         elif s == "-a":
@@ -58,6 +58,19 @@ def tokenize_operands(operand_strings: List[str]) -> List[Tuple[OperandTokens, s
             rv.append((OperandTokens.OPERAND_VALUE, s))
     
     return rv
+
+# Maps operand names to functions that consume a path and return a Boolean
+PATH_OPERAND_EVALUATORS = {}
+
+def operand(name: str):
+    def wrapper(func):
+        if name in PATH_OPERAND_EVALUATORS:
+            raise ValueError(f"{name} already defined as an operand!")
+        
+        PATH_OPERAND_EVALUATORS[name] = func
+
+        return func
+    return wrapper
 
 def descend(path: Path) -> List[Path]:
     """
