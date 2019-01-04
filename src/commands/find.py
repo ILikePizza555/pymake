@@ -1,38 +1,72 @@
 from .command import command
-from typing import List, Dict, Tuple
+from enum import Enum, unique, auto
+from typing import List, Dict, Tuple, Any
 from io import IOBase
-from itertools import takewhile
-import enum
+from getopt import getopt
 
-class LinkBehavior(enum.Enum):
-    NEVER = 1,
-    PROCESSING_ONLY = 2,
-    ALWAYS = 3
+class SymlinkBehavior(Enum):
+    NEVER_FOLLOW = "P",
+    ALWAYS_FOLLOW = "L",
+    WHEN_PROCESSING = "H"
+
+@unique
+class OperandTokens(Enum):
+    OPERAND_NAME = auto()
+    OPERAND_VALUE = auto()
+    LPARAM = auto()
+    RPARAM = auto()
+    NOT = auto()
+    AND = auto()
+    OR = auto()
 
 
-def parse_flags(args: List[str]) -> Tuple[LinkBehavior, bool]:
-    rv_behavior = None
-    rv_verbose = False
+def tokenize_operands(operand_strings: List[str]) -> List[Tuple[OperandTokens, str]]:
+    rv = []
 
-    while args[0].startswith('-'):
-        item = args.pop(0)
+    while operand_strings:
+        s = operand_strings.pop(0)
 
-        if item == "-H":
-            rv_behavior = LinkBehavior.PROCESSING_ONLY
-        elif item == "-L":
-            rv_behavior = LinkBehavior.ALWAYS
-        elif item == "-v":
-            rv_verbose = True
+        if s == "(":
+            rv.append((OperandTokens.LPARAM, s))
+        elif s == ")":
+            rv.append((OperandTokens.RPARAM, s))
+        elif s == "!":
+            rv.append((OperandTokens.NOT, s))
+        elif s == "-a":
+            rv.append((OperandTokens.AND, s))
+        elif s == "-o":
+            rv.append((OperandTokens.OR, s))
+        elif s.startswith("-"):
+            rv.append((OperandTokens.OPERAND_NAME, s[1:]))
         else:
-            raise ValueError(f"Unknown flag: {item}")
+            rv.append((OperandTokens.OPERAND_VALUE, s))
     
-    return (rv_behavior, rv_verbose)
+    return rv
 
-def parse_operands(args: List[str]):
-    pass
+def determine_behavior(options: List[str]) -> SymlinkBehavior:
+    rv = None
+    for o in options:
+        try:
+            rv = SymlinkBehavior(o)
+        except ValueError:
+            continue
+    
+    # Default behavior is to never follow symbolic links. 
+    if rv is None:
+        return SymlinkBehavior.NEVER_FOLLOW
+    else:
+        return rv
+
 
 @command("find")
 def find(args: List[str], env: Dict[str, str], f_in: IOBase, f_out: IOBase) -> int:
-    behavior, verbose = parse_flags(args)
-    paths = list(takewhile(lambda s: not s.startswith("-") || s != "!" || s != "(", args))
-    operands = parse_operands([len(paths):])
+    opt: Tuple[List[Tuple[str, str]], List[str]] = getopt(args, "HLPv")
+
+    # Flatten the options into a list of strings
+    options: List[str] = [i[0][1:] for i in opt[0]]
+    
+    # Set variables to control program behavior
+    behavior = determine_behavior(options)
+    verbose = "v" in options
+
+    path = opt[1][0]
