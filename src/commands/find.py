@@ -1,7 +1,8 @@
 from .command import command
 from enum import Enum, unique, auto
-from typing import List, Dict, Tuple, Any
+from typing import List, Dict, Tuple, Any, NamedTuple
 from io import IOBase
+from itertools import takewhile
 from getopt import getopt
 from pathlib import Path
 
@@ -71,6 +72,40 @@ def operand(name: str):
 
         return func
     return wrapper
+
+class Expression(NamedTuple):
+    """
+    Represents an operand expression (an operand and an optional number of values)
+    """
+    name: str
+    values: List[str]
+
+    @classmethod
+    def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        name = tokens.pop(0)[1]
+        values = []
+
+        while tokens and tokens[0][0] == OperandTokens.OPERAND_VALUE:
+            values.append(tokens.pop(0)[1])
+        
+        return cls(name, values)
+
+class AndOp(NamedTuple):
+    """
+    Represents an 'and' operator expression.
+    """
+    left: Expression
+    right: Expression
+
+class OrOp(NamedTuple):
+    """
+    Represents an 'or' operator expression.
+    """
+    left: Expression
+    right: Expression
+
+class NotOp(NamedTuple):
+    ex: Expression
 
 def descend(path: Path) -> List[Path]:
     """
