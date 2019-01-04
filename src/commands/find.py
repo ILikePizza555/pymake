@@ -60,6 +60,9 @@ def tokenize_operands(operand_strings: List[str]) -> List[Tuple[OperandTokens, s
     return rv
 
 def descend(path: Path) -> List[Path]:
+    """
+    Decends the given path. Returns a list of Paths to all files.
+    """
     rv = []
 
     path_stack = list(path.iterdir()) if path.is_dir() else [path]
@@ -74,6 +77,8 @@ def descend(path: Path) -> List[Path]:
         else:
             #TODO: Add operand evaluation here
             rv.append(current_item)
+        
+        i += 1
     
     return rv
 
@@ -88,4 +93,7 @@ def find(args: List[str], env: Dict[str, str], f_in: IOBase, f_out: IOBase) -> i
     behavior = determine_behavior(options)
     verbose = "v" in options
 
-    path = Path(opt[1][0])
+    file_paths = descend(Path(opt[1][0]))
+
+    for f in file_paths:
+        print(f, file=f_out)
