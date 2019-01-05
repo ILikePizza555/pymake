@@ -79,9 +79,9 @@ def operand(name: str):
         return func
     return wrapper
 
-class Expression(NamedTuple):
+class ASTPrimary(NamedTuple):
     """
-    Represents an operand expression (an operand and an optional number of values)
+    Represents a primary expression (an operand and an optional number of values that evaluate to a boolean value)
     """
     name: str
     values: List[str]
@@ -96,10 +96,45 @@ class Expression(NamedTuple):
         
         return cls(name, values)
 
-class BinaryOp(NamedTuple):
-    left_expr: Expression
-    op: str
-    right_expr: Expression
+class ASTBinAnd(NamedTuple):
+    """
+    Represents a binary AND expression of primaries
+    """
+    primaries: List[ASTPrimary]
+
+    @classmethod
+    def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        p = []
+
+        while tokens:
+            if peek_token(tokens) == OperandTokens.AND:
+                tokens.pop(0)
+            
+            if peek_token(tokens) == OperandTokens.OPERAND_NAME:
+                p.append(ASTPrimary.from_tokens(tokens))
+            else:
+                break
+        
+        return cls(p)
+
+class ASTBinOr(NamedTuple):
+    """
+    Represents a binary OR expression
+    """
+    ands: List[ASTBinAnd]
+
+    @classmethod
+    def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        rv = [ASTBinAnd.from_tokens(tokens)]
+
+        while tokens and peek_token(tokens) == OperandTokens.OR:
+            # Pop the OR token, then parse the expected expression
+            tokens.pop(0)
+
+            rv.append(ASTBinAnd.from_tokens(tokens))
+        
+        return cls(rv)
+
     
 def descend(path: Path) -> List[Path]:
     """
