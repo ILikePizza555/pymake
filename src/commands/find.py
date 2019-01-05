@@ -1,6 +1,6 @@
 from .command import command
 from enum import Enum, unique, auto
-from typing import List, Dict, Tuple, Any, NamedTuple
+from typing import List, Dict, Tuple, Any, NamedTuple, Union
 from io import IOBase
 from itertools import takewhile
 from getopt import getopt
@@ -60,6 +60,12 @@ def tokenize_operands(operand_strings: List[str]) -> List[Tuple[OperandTokens, s
     
     return rv
 
+def peek_token(tokens: List[Tuple[OperandTokens, str]], i: int = 0) -> OperandTokens:
+    """
+    Returns the type of the ith token in the list.
+    """
+    return tokens[i][0]
+
 # Maps operand names to functions that consume a path and return a Boolean
 PATH_OPERAND_EVALUATORS = {}
 
@@ -90,23 +96,11 @@ class Expression(NamedTuple):
         
         return cls(name, values)
 
-class AndOp(NamedTuple):
-    """
-    Represents an 'and' operator expression.
-    """
-    left: Expression
-    right: Expression
-
-class OrOp(NamedTuple):
-    """
-    Represents an 'or' operator expression.
-    """
-    left: Expression
-    right: Expression
-
-class NotOp(NamedTuple):
-    ex: Expression
-
+class BinaryOp(NamedTuple):
+    left_expr: Expression
+    op: str
+    right_expr: Expression
+    
 def descend(path: Path) -> List[Path]:
     """
     Decends the given path. Returns a list of Paths to all files.
