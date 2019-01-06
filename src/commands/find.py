@@ -109,7 +109,7 @@ class ASTPrimary(NamedTuple):
         return cls(name, values)
 
 class ASTExpr(NamedTuple):
-    value: Union[ASTPrimary, "ASTBinNot", "ASTBinOr"]
+    value: Union[ASTPrimary, "ASTBinOr"]
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
@@ -136,22 +136,22 @@ class ASTBinAnd(NamedTuple):
     """
     Represents a binary AND expression of primaries
     """
-    primaries: List[ASTPrimary]
+    expressions: List[ASTPrimary]
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
-        p = []
+        expr = []
 
         while tokens:
             if peek_token(tokens) == OperandTokens.AND:
                 tokens.pop(0)
             
             if peek_token(tokens) == OperandTokens.OPERAND_NAME:
-                p.append(ASTExpr.from_tokens(tokens))
+                expr.append(ASTExpr.from_tokens(tokens))
             else:
                 break
         
-        return cls(p)
+        return cls(expr)
 
 class ASTBinOr(NamedTuple):
     """
