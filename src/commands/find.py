@@ -63,7 +63,12 @@ def tokenize_operands(operand_strings: List[str]) -> List[Tuple[OperandTokens, s
 def peek_token(tokens: List[Tuple[OperandTokens, str]], i: int = 0) -> OperandTokens:
     """
     Returns the type of the ith token in the list.
+
+    If tokens is empty, a ValueError is thrown.
     """
+    if not tokens:
+        raise ValueError("tokens is empty")
+
     return tokens[i][0]
 
 def eat_token(tokens: List[Tuple[OperandTokens, str]], token: OperandTokens, i: int = 0) -> str:
