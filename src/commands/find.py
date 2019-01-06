@@ -100,13 +100,37 @@ class ASTPrimary(NamedTuple):
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
-        name = tokens.pop(0)[1]
+        name = eat_token(tokens, OperandTokens.OPERAND_NAME)
         values = []
 
         while tokens and tokens[0][0] == OperandTokens.OPERAND_VALUE:
-            values.append(tokens.pop(0)[1])
+            values.append(OperandTokens.OPERAND_VALUE)
         
         return cls(name, values)
+
+class ASTExpr(NamedTuple):
+    value: Union[ASTPrimary, "ASTBinNot", "ASTBinOr"]
+
+    @classmethod
+    def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        if peek_token(tokens) == OperandTokens.LPAREN:
+            eat_token(tokens, OperandTokens.LPAREN)
+            value = ASTBinOr.from_tokens(tokens)
+            eat_token(tokens, OperandTokens.RPAREN)
+
+            return cls(value)
+        if peek_token(tokens) == OperandTokens.NOT:
+            return cls(ASTBinNot.from_tokens(tokens))
+        else:
+            return cls(ASTPrimary.from_tokens(tokens))
+
+class ASTBinNot(NamedTuple):
+    expr: ASTExpr
+
+    @classmethod
+    def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        eat_token(tokens, OperandTokens.NOT)
+        return cls(ASTExpr.from_tokens(tokens))
 
 class ASTBinAnd(NamedTuple):
     """
@@ -123,7 +147,7 @@ class ASTBinAnd(NamedTuple):
                 tokens.pop(0)
             
             if peek_token(tokens) == OperandTokens.OPERAND_NAME:
-                p.append(ASTPrimary.from_tokens(tokens))
+                p.append(ASTExpr.from_tokens(tokens))
             else:
                 break
         
@@ -131,7 +155,9 @@ class ASTBinAnd(NamedTuple):
 
 class ASTBinOr(NamedTuple):
     """
-    Represents a binary OR expression
+    Represents a binary OR expression. 
+
+    Because OR is the expression with the least precidence, it will often be the root of the AST.
     """
     ands: List[ASTBinAnd]
 
