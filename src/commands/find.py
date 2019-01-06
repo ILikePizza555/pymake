@@ -76,6 +76,9 @@ def eat_token(tokens: List[Tuple[OperandTokens, str]], token: OperandTokens, i: 
     Removes the ith token from tokens and compares it's type. If the type matches, it's value is returned.
     Otherwise an exception is thrown.
     """
+    if not tokens:
+        raise CommandParseError("find", "", f"Expected token {token}")
+
     t_type, v = tokens.pop(i)
 
     if t_type == token:
