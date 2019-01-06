@@ -1,4 +1,4 @@
-from .command import command
+from .command import command, CommandParseError
 from enum import Enum, unique, auto
 from typing import List, Dict, Tuple, Any, NamedTuple, Union
 from io import IOBase
@@ -73,18 +73,17 @@ def peek_token(tokens: List[Tuple[OperandTokens, str]], i: int = 0) -> OperandTo
 
 def eat_token(tokens: List[Tuple[OperandTokens, str]], token: OperandTokens, i: int = 0) -> str:
     """
-    Removes the ith token from tokens and compares it's type. If the type matches, it's value is returned.
-    Otherwise an exception is thrown.
+    Compares the ith token's type with the one provided. If they are equivalent, the value of the token is returned.
+    Otherwise and exception is thrown.
     """
     if not tokens:
         raise CommandParseError("find", "", f"Expected token {token}")
 
-    t_type, v = tokens.pop(i)
+    if peek_token(tokens, i) != token:
+        raise CommandParseError("find", tokens[i][1], f"Expected token {token}")
 
-    if t_type == token:
-        return v
-    else:
-        raise CommandParseError("find", v, f"Expected token {t_type}")
+    return tokens.pop(i)[1]
+        
 
 # Maps operand names to functions that consume a path and return a Boolean
 PATH_OPERAND_EVALUATORS = {}
@@ -110,6 +109,7 @@ class ASTPrimary(NamedTuple):
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
         """
         Consumes tokens from the list to form a primary. Assumes that the list of tokens starts with a valid primary.
+        EBNF: `primary = NAME, {VALUE}`
 
         If the list is empty, a ValueError is thrown.
         If the list does not begin with a valid primary, a CommandParseError is thrown.
@@ -126,7 +126,7 @@ class ASTPrimary(NamedTuple):
         return cls(name, values)
 
 class ASTExpr(NamedTuple):
-    value: Union[ASTPrimary, "ASTBinOr"]
+    value: Union[ASTPrimary, "ASTBinNot", "ASTBinOr"]
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
