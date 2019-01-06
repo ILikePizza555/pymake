@@ -52,22 +52,15 @@ class TestASTExpr(object):
         with pytest.raises(CommandParseError):
             find.ASTExpr.from_tokens(toks)
     
-    def test_valid_parentheses(self):
-        toks = find.tokenize_operands("( -1 a b c -2 )".split())
+    @pytest.mark.parametrize(("operands", "expected"), [
+        ("( -1 a b c -2 )".split(), find.ASTBinOr),
+        ("! -1 a b c".split(),      find.ASTBinNot),
+        ("-1 a b c".split(),        find.ASTPrimary)
+    ])
+    def test_valid(self, operands, expected):
+        toks = find.tokenize_operands(operands)
 
         actual = find.ASTExpr.from_tokens(toks)
 
-        # Check the type because whether or not ASTBinOr correctly parsed the expression is not the scope of this test
-        assert type(actual.value) is find.ASTBinOr
-    
-    def test_valid_not(self):
-        toks = find.tokenize_operands("! -1 a b c".split())
-
-        actual = find.ASTExpr.from_tokens(toks)
-        assert type(actual.value) is find.ASTBinNot
-
-    def test_valid_primary(self):
-        toks = find.tokenize_operands("-1 a b c".split())
-
-        actual = find.ASTExpr.from_tokens(toks)
-        assert type(actual.value) is find.ASTPrimary
+        # Check the type because whether or not the subtree correctly parsed is not the scope of this test
+        assert type(actual.value) is expected
