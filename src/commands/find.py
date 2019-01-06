@@ -140,15 +140,17 @@ class ASTBinAnd(NamedTuple):
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
-        expr = []
+        expr = [ASTExpr.from_tokens(tokens)]
 
         while tokens:
             if peek_token(tokens) == OperandTokens.AND:
                 tokens.pop(0)
             
-            if peek_token(tokens) == OperandTokens.OPERAND_NAME:
+            # Additional expressions are optional and '-a' does not have to exist. So, we try to parse an expression.
+            # If we encounter an exception, then it's not an expression, so we move on.
+            try:
                 expr.append(ASTExpr.from_tokens(tokens))
-            else:
+            except Exception:
                 break
         
         return cls(expr)
