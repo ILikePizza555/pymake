@@ -24,3 +24,40 @@ class TestASTPrimary(object):
         actual = find.ASTPrimary.from_tokens(tinput)
         assert actual == expected
         assert tinput == remainder
+
+class TestASTExpr(object):
+    def test_empty_tokens_throws_ValueError(self):
+        with pytest.raises(ValueError):
+            find.ASTExpr.from_tokens([])
+    
+    def test_invalid_tokens_throws_CommandParseError(self):
+        toks = find.tokenize_operands("-o -a ( )".split())
+
+        with pytest.raises(CommandParseError):
+            find.ASTExpr.from_tokens(toks)
+
+    def test_unclosed_parentheses_throws_CommandParseError(self):
+        toks = find.tokenize_operands("( -1 -2 -3".split())
+
+        with pytest.raises(CommandParseError):
+            find.ASTExpr.from_tokens(toks)
+    
+    def test_valid_parentheses(self):
+        toks = find.tokenize_operands("( -1 a b c -2 )".split())
+
+        actual = find.ASTExpr.from_tokens(toks)
+
+        # Check the type because whether or not ASTBinOr correctly parsed the expression is not the scope of this test
+        assert type(actual.value) is find.ASTBinOr
+    
+    def test_valid_not(self):
+        toks = find.tokenize_operands("! -1 a b c".split())
+
+        actual = find.ASTExpr.from_tokens(toks)
+        assert type(actual.value) is find.ASTBinNot
+
+    def test_valid_primary(self):
+        toks = find.tokenize_operands("-1 a b c".split())
+
+        actual = find.ASTExpr.from_tokens(toks)
+        assert type(actual.value) is find.ASTPrimary
