@@ -76,7 +76,7 @@ def eat_token(tokens: List[Tuple[OperandTokens, str]], token: OperandTokens, i: 
     if t_type == token:
         return v
     else:
-        raise Exception(f"Parse Error: Expected token {token}")
+        raise CommandParseError("find", v, f"Expected token {t_type}")
 
 # Maps operand names to functions that consume a path and return a Boolean
 PATH_OPERAND_EVALUATORS = {}
