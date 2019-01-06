@@ -167,7 +167,7 @@ class ASTBinAnd(NamedTuple):
     """
     Represents a binary AND expression of primaries
     """
-    expressions: List[ASTPrimary]
+    expressions: List[ASTExpr]
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
