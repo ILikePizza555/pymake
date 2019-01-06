@@ -66,6 +66,18 @@ def peek_token(tokens: List[Tuple[OperandTokens, str]], i: int = 0) -> OperandTo
     """
     return tokens[i][0]
 
+def eat_token(tokens: List[Tuple[OperandTokens, str]], token: OperandTokens, i: int = 0) -> str:
+    """
+    Removes the ith token from tokens and compares it's type. If the type matches, it's value is returned.
+    Otherwise an exception is thrown.
+    """
+    t_type, v = tokens.pop(i)
+
+    if t_type == token:
+        return v
+    else:
+        raise Exception(f"Parse Error: Expected token {token}")
+
 # Maps operand names to functions that consume a path and return a Boolean
 PATH_OPERAND_EVALUATORS = {}
 
