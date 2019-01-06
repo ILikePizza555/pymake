@@ -104,7 +104,7 @@ class ASTPrimary(NamedTuple):
         values = []
 
         while tokens and tokens[0][0] == OperandTokens.OPERAND_VALUE:
-            values.append(OperandTokens.OPERAND_VALUE)
+            values.append(eat_token(tokens, OperandTokens.OPERAND_VALUE))
         
         return cls(name, values)
 
