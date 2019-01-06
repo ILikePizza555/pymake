@@ -100,6 +100,12 @@ class ASTPrimary(NamedTuple):
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        """
+        Consumes tokens from the list to form a primary. Assumes that the list of tokens starts with a valid primary.
+
+        If the list is empty, a ValueError is thrown.
+        If the list does not begin with a valid primary, a CommandParseError is thrown.
+        """
         name = eat_token(tokens, OperandTokens.OPERAND_NAME)
         values = []
 
