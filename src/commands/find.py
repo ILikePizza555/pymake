@@ -127,6 +127,13 @@ class ASTExpr(NamedTuple):
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        """
+        Consumes tokens from the list to form an expression. Assumes the list starts with a valid expression.
+        EBNF: `expr = LPAREN binor RPAREN | binnot | primary`
+
+        If the list is empty, a ValueError is thrown.
+        If the list does not begin with a valid expression a CommandParserError is thrown.
+        """
         if peek_token(tokens) == OperandTokens.LPAREN:
             eat_token(tokens, OperandTokens.LPAREN)
             value = ASTBinOr.from_tokens(tokens)
