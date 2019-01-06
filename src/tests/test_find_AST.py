@@ -64,3 +64,8 @@ class TestASTExpr(object):
 
         # Check the type because whether or not the subtree correctly parsed is not the scope of this test
         assert type(actual.value) is expected
+
+class TestASTAnd(object):
+    def test_empty_tokens_throws_ValueError(self):
+        with pytest.raises(ValueError):
+            find.ASTExpr.from_tokens([])
