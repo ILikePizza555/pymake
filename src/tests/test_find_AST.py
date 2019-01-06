@@ -69,3 +69,44 @@ class TestASTAnd(object):
     def test_empty_tokens_throws_ValueError(self):
         with pytest.raises(ValueError):
             find.ASTExpr.from_tokens([])
+
+def test_big():
+    tinput = "-1 a -2 b ! -3 c -o ( -4 -5 -o -6 )"
+    expected = find.ASTBinOr([
+        find.ASTBinAnd([
+            find.ASTExpr(
+                find.ASTPrimary("1", ["a"])
+            ),
+            find.ASTExpr(
+                find.ASTPrimary("2", ["b"])
+            ),
+            find.ASTExpr(
+                find.ASTBinNot(
+                    find.ASTExpr(
+                        find.ASTPrimary("3", ["c"])
+                    )
+                )
+            )
+        ]),
+        find.ASTBinAnd([
+            find.ASTExpr(
+                find.ASTBinOr([
+                    find.ASTBinAnd([
+                        find.ASTExpr(
+                            find.ASTPrimary("4", [])
+                        ),
+                        find.ASTExpr(
+                            find.ASTPrimary("5", [])
+                        )
+                    ]),
+                    find.ASTBinAnd([
+                        find.ASTExpr(
+                            find.ASTPrimary("6", [])
+                        )
+                    ])
+                ])
+            )
+        ])
+    ])
+
+    assert find.ASTBinOr.from_tokens(find.tokenize_operands(tinput.split())) == expected
