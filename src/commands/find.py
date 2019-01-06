@@ -153,6 +153,13 @@ class ASTBinNot(NamedTuple):
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        """
+        Consumes tokesn from the list to form a BinNot. Assumes the list starts with a valid expression.
+        EBNF: `expr = NOT expr`
+
+        If the list is empty, a ValueError is thrown.
+        If the list does not begin with a valid expression a CommandParserError is thrown.
+        """
         eat_token(tokens, OperandTokens.NOT)
         return cls(ASTExpr.from_tokens(tokens))
 
