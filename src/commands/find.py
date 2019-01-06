@@ -125,31 +125,8 @@ class ASTPrimary(NamedTuple):
         
         return cls(name, values)
 
-class ASTExpr(NamedTuple):
-    value: Union[ASTPrimary, "ASTBinNot", "ASTBinOr"]
-
-    @classmethod
-    def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
-        """
-        Consumes tokens from the list to form an expression. Assumes the list starts with a valid expression.
-        EBNF: `expr = LPAREN binor RPAREN | binnot | primary`
-
-        If the list is empty, a ValueError is thrown.
-        If the list does not begin with a valid expression a CommandParserError is thrown.
-        """
-        if peek_token(tokens) == OperandTokens.LPAREN:
-            eat_token(tokens, OperandTokens.LPAREN)
-            value = ASTBinOr.from_tokens(tokens)
-            eat_token(tokens, OperandTokens.RPAREN)
-
-            return cls(value)
-        if peek_token(tokens) == OperandTokens.NOT:
-            return cls(ASTBinNot.from_tokens(tokens))
-        else:
-            return cls(ASTPrimary.from_tokens(tokens))
-
 class ASTBinNot(NamedTuple):
-    expr: ASTExpr
+    expr: Union[ASTPrimary, "ASTBinNot", "ASTBinOr"]
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
@@ -161,17 +138,17 @@ class ASTBinNot(NamedTuple):
         If the list does not begin with a valid expression a CommandParserError is thrown.
         """
         eat_token(tokens, OperandTokens.NOT)
-        return cls(ASTExpr.from_tokens(tokens))
+        return cls(expr_from_tokens(tokens))
 
 class ASTBinAnd(NamedTuple):
     """
     Represents a binary AND expression of primaries
     """
-    expressions: List[ASTExpr]
+    expressions: List[Union[ASTPrimary, ASTBinNot, "ASTBinOr"]]
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
-        expr = [ASTExpr.from_tokens(tokens)]
+        expr = [expr_from_tokens(tokens)]
 
         while tokens:
             if peek_token(tokens) == OperandTokens.AND:
@@ -180,7 +157,7 @@ class ASTBinAnd(NamedTuple):
             # Additional expressions are optional and '-a' does not have to exist. So, we try to parse an expression.
             # If we encounter an exception, then it's not an expression, so we move on.
             try:
-                expr.append(ASTExpr.from_tokens(tokens))
+                expr.append(expr_from_tokens(tokens))
             except Exception:
                 break
         
@@ -206,6 +183,24 @@ class ASTBinOr(NamedTuple):
         
         return cls(rv)
 
+def expr_from_tokens(tokens: List[Tuple[OperandTokens, str]]) -> Union[ASTPrimary, ASTBinNot, ASTBinOr]:
+    """
+    Consumes tokens from the list to form an expression. Assumes the list starts with a valid expression.
+    EBNF: `expr = LPAREN binor RPAREN | binnot | primary`
+
+    If the list is empty, a ValueError is thrown.
+    If the list does not begin with a valid expression a CommandParserError is thrown.
+    """
+    if peek_token(tokens) == OperandTokens.LPAREN:
+        eat_token(tokens, OperandTokens.LPAREN)
+        rv = ASTBinOr.from_tokens(tokens)
+        eat_token(tokens, OperandTokens.RPAREN)
+
+        return rv
+    if peek_token(tokens) == OperandTokens.NOT:
+        return ASTBinNot.from_tokens(tokens)
+    else:
+        return ASTPrimary.from_tokens(tokens)
     
 def descend(path: Path) -> List[Path]:
     """
