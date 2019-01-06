@@ -1,4 +1,5 @@
 from commands.command import CommandParseError
+from copy import deepcopy
 import commands.find as find
 import pytest
 
@@ -12,6 +13,15 @@ class TestASTPrimary(object):
 
         with pytest.raises(CommandParseError):
             find.ASTPrimary.from_tokens(toks)
+
+    def test_look_before_eating(self):
+        toks = find.tokenize_operands("-o -a ( )".split())
+        toks_cpy = deepcopy(toks)
+
+        with pytest.raises(CommandParseError):
+            find.ASTPrimary.from_tokens(toks)
+
+        assert toks == toks_cpy
 
     @pytest.mark.parametrize(("tinput", "expected", "remainder"), [
         (find.tokenize_operands(["-test"]),                             find.ASTPrimary("test", []),            []),
