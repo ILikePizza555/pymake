@@ -106,6 +106,9 @@ class ASTPrimary(NamedTuple):
         If the list is empty, a ValueError is thrown.
         If the list does not begin with a valid primary, a CommandParseError is thrown.
         """
+        if not tokens:
+            raise ValueError("tokens is empty")
+
         name = eat_token(tokens, OperandTokens.OPERAND_NAME)
         values = []
 
