@@ -35,22 +35,22 @@ class TestASTPrimary(object):
         assert actual == expected
         assert tinput == remainder
 
-class TestASTExpr(object):
+class TestExpr(object):
     def test_empty_tokens_throws_ValueError(self):
         with pytest.raises(ValueError):
-            find.ASTExpr.from_tokens([])
+            find.expr_from_tokens([])
     
     def test_invalid_tokens_throws_CommandParseError(self):
         toks = find.tokenize_operands("-o -a ( )".split())
 
         with pytest.raises(CommandParseError):
-            find.ASTExpr.from_tokens(toks)
+            find.expr_from_tokens(toks)
 
     def test_unclosed_parentheses_throws_CommandParseError(self):
         toks = find.tokenize_operands("( -1 -2 -3".split())
 
         with pytest.raises(CommandParseError):
-            find.ASTExpr.from_tokens(toks)
+            find.expr_from_tokens(toks)
     
     @pytest.mark.parametrize(("operands", "expected"), [
         ("( -1 a b c -2 )".split(), find.ASTBinOr),
@@ -60,52 +60,36 @@ class TestASTExpr(object):
     def test_valid(self, operands, expected):
         toks = find.tokenize_operands(operands)
 
-        actual = find.ASTExpr.from_tokens(toks)
+        actual = find.expr_from_tokens(toks)
 
         # Check the type because whether or not the subtree correctly parsed is not the scope of this test
-        assert type(actual.value) is expected
+        assert type(actual) is expected
 
 class TestASTAnd(object):
     def test_empty_tokens_throws_ValueError(self):
         with pytest.raises(ValueError):
-            find.ASTExpr.from_tokens([])
+            find.ASTBinAnd.from_tokens([])
 
 def test_big():
     tinput = "-1 a -2 b ! -3 c -o ( -4 -5 -o -6 )"
     expected = find.ASTBinOr([
         find.ASTBinAnd([
-            find.ASTExpr(
-                find.ASTPrimary("1", ["a"])
-            ),
-            find.ASTExpr(
-                find.ASTPrimary("2", ["b"])
-            ),
-            find.ASTExpr(
-                find.ASTBinNot(
-                    find.ASTExpr(
-                        find.ASTPrimary("3", ["c"])
-                    )
-                )
+            find.ASTPrimary("1", ["a"]),
+            find.ASTPrimary("2", ["b"]),
+            find.ASTBinNot(
+                find.ASTPrimary("3", ["c"])
             )
         ]),
         find.ASTBinAnd([
-            find.ASTExpr(
-                find.ASTBinOr([
-                    find.ASTBinAnd([
-                        find.ASTExpr(
-                            find.ASTPrimary("4", [])
-                        ),
-                        find.ASTExpr(
-                            find.ASTPrimary("5", [])
-                        )
-                    ]),
-                    find.ASTBinAnd([
-                        find.ASTExpr(
-                            find.ASTPrimary("6", [])
-                        )
-                    ])
+            find.ASTBinOr([
+                find.ASTBinAnd([
+                    find.ASTPrimary("4", []),
+                    find.ASTPrimary("5", [])
+                ]),
+                find.ASTBinAnd([
+                    find.ASTPrimary("6", [])
                 ])
-            )
+            ])
         ])
     ])
 
