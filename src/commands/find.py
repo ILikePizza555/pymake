@@ -148,6 +148,14 @@ class ASTBinAnd(NamedTuple):
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        """
+        Consumes tokens from the list to form an AND expression. Assumes the list starts with a valid expression.
+        AND expressions must contain at least one valid expression. Multiple expressions may be separated optionally with '-a'.
+        EBNF: `binand = expr {[AND] expr}`
+
+        If tokens is empty, a ValueError is thrown.
+        If the list does not begin with a valid expression a CommandParserError is thrown.
+        """
         expr = [expr_from_tokens(tokens)]
 
         while tokens:
@@ -173,6 +181,14 @@ class ASTBinOr(NamedTuple):
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
+        """
+        Consumes tokens from the list to form an OR expression. OR expressions are composed of at least one AND expression. 
+        Assumes the list begins with a valid AND expression. Multiple AND expressions must be separated by `-o`.
+        EBNF: `binor = binand {OR binand}`
+
+        If tokens is empty, a ValueError is thrown.
+        If the list does not begin with a valid AND expression a CommandParserError is thrown.
+        """
         rv = [ASTBinAnd.from_tokens(tokens)]
 
         while tokens and peek_token(tokens) == OperandTokens.OR:
