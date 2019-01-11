@@ -37,7 +37,7 @@ def bracket_expantion(b: str) -> set:
         else:
             # Range, split into two characters, then iterate between the ascii codes
             lower, upper = m.group(0).split("-")
-            for c in range(ord(lower), ord(upper)+1):
+            for c in range(ord(lower), ord(upper) + 1):
                 rv.add(chr(c))
 
     if inverse:

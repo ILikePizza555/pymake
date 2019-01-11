@@ -1,4 +1,4 @@
 [flake8]
 exclude = .vscode,__pycache__,.git
 max-line-length = 140
-ignore = W293
+ignore = W293, E303, E305
