@@ -251,7 +251,6 @@ class ASTBinOr(NamedTuple):
         return cls(rv)
 
 
-
 def expr_from_tokens(tokens: List[Tuple[OperandTokens, str]]) -> Union[ASTPrimary, ASTBinNot, ASTBinOr]:
     """
     Consumes tokens from the list to form an expression. Assumes the list starts with a valid expression.
@@ -272,7 +271,8 @@ def expr_from_tokens(tokens: List[Tuple[OperandTokens, str]]) -> Union[ASTPrimar
         return ASTPrimary.from_tokens(tokens)
 
 
-def descend(path: Path) -> List[Path]:
+
+def descend(path: Path, tree: Union[None, ASTPrimary, ASTBinNot, ASTBinOr], verbose=False) -> List[Path]:
     """
     Decends the given path. Returns a list of Paths to all files.
     """
@@ -284,12 +284,19 @@ def descend(path: Path) -> List[Path]:
     # A while loop is used here instead of a for loop so we can iterate over the "stack" while adding items to it
     while i < len(path_stack):
         current_item: Path = path_stack[i]
-
+        
         if current_item.is_dir():
             path_stack.extend(current_item.iterdir())
+
+            if verbose:
+                print(f"Verbose: {str(current_item)} is directory, adding to stack.")
         else:
-            # TODO: Add operand evaluation here
-            rv.append(current_item)
+            evaluation = tree.evaluate(current_item)
+            if evaluation:
+                rv.append(current_item)
+            
+            if verbose:
+                print(f"Verbose: {str(current_item)} evaluated to {evaluation}")
 
         i += 1
 
@@ -307,7 +314,13 @@ def find(args: List[str], env: Dict[str, str], f_in: IOBase, f_out: IOBase) -> i
     behavior = determine_behavior(options)
     verbose = "v" in options
 
-    file_paths = descend(Path(opt[1][0]))
+    file_paths = takewhile(lambda s: s != "!" and s != "(" and not s.startswith("-"), opt[1])
+    operands = opt[1][len(file_paths):]
+    operand_tokens = tokenize_operands(operands)
+    tree = expr_from_tokens(operand_tokens)
+
+    if verbose:
+        print(f"Verbose: paths: {len(file_paths)}, parsed tokens: {len(operand_tokens)}, tree size: {tree.size()}")
 
     for f in file_paths:
         print(f, file=f_out)
