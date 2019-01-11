@@ -2,6 +2,7 @@ import string
 import re
 from typing import List, Union
 
+
 def bracket_expantion(b: str) -> set:
     match = re.fullmatch(r"\[:(.*):\]", b)
     if match is not None:
@@ -26,7 +27,7 @@ def bracket_expantion(b: str) -> set:
     if unwrapped[0] == "!" or unwrapped[0] == "^":
         inverse = True
         unwrapped = unwrapped[1:]
-    
+
     rv = set()
     # Loop over all single character or ranges (two characters separated by a dash)
     for m in re.finditer(r"(?:.\-.)|.", unwrapped):
@@ -38,10 +39,11 @@ def bracket_expantion(b: str) -> set:
             lower, upper = m.group(0).split("-")
             for c in range(ord(lower), ord(upper)+1):
                 rv.add(chr(c))
-    
+
     if inverse:
         return set(string.printable) - rv
     return rv
+
 
 def recursive_shell_match(input_str: str, pattern: List[Union[str, set]]) -> bool:
     if not input_str and not pattern:
@@ -49,17 +51,18 @@ def recursive_shell_match(input_str: str, pattern: List[Union[str, set]]) -> boo
 
     if pattern == ["*"]:
         return True
-        
+
     if pattern[0] == "?":
         return recursive_shell_match(input_str[1:], pattern[1:])
-        
+
     if pattern[0] == "*":
         return recursive_shell_match(input_str[1:], pattern[1:] if input_str[0] in pattern[1] else pattern)
-        
+
     if input_str[0] in pattern[0]:
         return recursive_shell_match(input_str[1:], pattern[1:])
-        
+
     return False
+
 
 def shell_pattern_match(input_str: Union[str, List[str]], pattern: str) -> Union[bool, List[bool]]:
     """
@@ -77,5 +80,3 @@ def shell_pattern_match(input_str: Union[str, List[str]], pattern: str) -> Union
         return recursive_shell_match(input_str, pattern_expansion)
     else:
         return [recursive_shell_match(i, pattern_expansion) for i in input_str]
-
-print(shell_pattern_match("JOHN_CENA.txt", "[:alpha:].*"))
