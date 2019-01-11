@@ -7,6 +7,8 @@ from getopt import getopt
 from pathlib import Path
 from shell_utils import shell_pattern_match
 from functools import reduce
+import sys
+import os
 
 
 class SymlinkBehavior(Enum):
@@ -318,7 +320,10 @@ def find(args: List[str], env: Dict[str, str], f_in: IOBase, f_out: IOBase) -> i
     behavior = determine_behavior(options)
     verbose = "v" in options
 
-    file_paths = takewhile(lambda s: s != "!" and s != "(" and not s.startswith("-"), opt[1])
+    if verbose:
+        print("Verbose: Enabled")
+
+    file_paths = list(map(Path, takewhile(lambda s: s != "!" and s != "(" and not s.startswith("-"), opt[1])))
     operands = opt[1][len(file_paths):]
     operand_tokens = tokenize_operands(operands)
     tree = expr_from_tokens(operand_tokens)
@@ -329,3 +334,6 @@ def find(args: List[str], env: Dict[str, str], f_in: IOBase, f_out: IOBase) -> i
     files = descend(file_paths, tree, verbose)
     for f in files:
         print(f, file=f_out)
+
+if __name__ == "__main__":
+    quit(find(sys.argv[1:], os.environ, sys.stdin, sys.stdout))
