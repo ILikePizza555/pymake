@@ -213,7 +213,7 @@ class ASTBinAnd(NamedTuple):
 
 class ASTBinOr(NamedTuple):
     """
-    Represents a binary OR expression. 
+    Represents a binary OR expression.
 
     Because OR is the expression with the least precidence, it will often be the root of the AST.
     """
@@ -233,7 +233,7 @@ class ASTBinOr(NamedTuple):
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
         """
-        Consumes tokens from the list to form an OR expression. OR expressions are composed of at least one AND expression. 
+        Consumes tokens from the list to form an OR expression. OR expressions are composed of at least one AND expression.
         Assumes the list begins with a valid AND expression. Multiple AND expressions must be separated by `-o`.
         EBNF: `binor = binand {OR binand}`
 
@@ -272,19 +272,23 @@ def expr_from_tokens(tokens: List[Tuple[OperandTokens, str]]) -> Union[ASTPrimar
 
 
 
-def descend(path: Path, tree: Union[None, ASTPrimary, ASTBinNot, ASTBinOr], verbose=False) -> List[Path]:
+def descend(path: Union[Path, List[Path]], tree: Union[None, ASTPrimary, ASTBinNot, ASTBinOr], verbose=False) -> List[Path]:
     """
     Decends the given path. Returns a list of Paths to all files.
     """
     rv = []
 
-    path_stack = list(path.iterdir()) if path.is_dir() else [path]
+    try:
+        path_stack = path[:]
+    except TypeError:
+        path_stack = [path]
+    
     i = 0
 
     # A while loop is used here instead of a for loop so we can iterate over the "stack" while adding items to it
     while i < len(path_stack):
         current_item: Path = path_stack[i]
-        
+
         if current_item.is_dir():
             path_stack.extend(current_item.iterdir())
 
@@ -322,5 +326,6 @@ def find(args: List[str], env: Dict[str, str], f_in: IOBase, f_out: IOBase) -> i
     if verbose:
         print(f"Verbose: paths: {len(file_paths)}, parsed tokens: {len(operand_tokens)}, tree size: {tree.size()}")
 
-    for f in file_paths:
+    files = descend(file_paths, tree, verbose)
+    for f in files:
         print(f, file=f_out)
