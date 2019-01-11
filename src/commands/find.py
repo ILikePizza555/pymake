@@ -5,6 +5,8 @@ from io import IOBase
 from itertools import takewhile
 from getopt import getopt
 from pathlib import Path
+from shell_utils import shell_pattern_match
+from functools import reduce
 
 
 class SymlinkBehavior(Enum):
@@ -26,6 +28,7 @@ def determine_behavior(options: List[str]) -> SymlinkBehavior:
         return SymlinkBehavior.NEVER_FOLLOW
     else:
         return rv
+
 
 
 @unique
@@ -89,6 +92,7 @@ def eat_token(tokens: List[Tuple[OperandTokens, str]], token: OperandTokens, i: 
     return tokens.pop(i)[1]
 
 
+
 # Maps operand names to functions that consume a path and return a Boolean
 PATH_OPERAND_EVALUATORS = {}
 
@@ -102,6 +106,12 @@ def operand(name: str):
        
         return func
     return wrapper
+
+
+@operand("name")
+def op_name(path: Path, pattern: str) -> bool:
+    return shell_pattern_match(path.name, pattern)
+
 
 
 class ASTPrimary(NamedTuple):
@@ -186,7 +196,18 @@ class ASTBinOr(NamedTuple):
 
     Because OR is the expression with the least precidence, it will often be the root of the AST.
     """
-    ands: List[ASTBinAnd]
+    children: List[ASTBinAnd]
+
+    def evaluate(self) -> bool:
+        """Evaluates the OR expression"""
+        if len(self.children) == 1:
+            return self.children[0].evaluate()
+
+        return reduce(lambda a, b: a.evaluate() | b.evaluate(), self.children)
+
+    def size(self) -> int:
+        """Returns the size of the tree"""
+        return 1 + reduce(lambda a, b: a.size() + b.size())
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
