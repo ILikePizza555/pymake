@@ -121,6 +121,12 @@ class ASTPrimary(NamedTuple):
     name: str
     values: List[str]
 
+    def evaluate(self, path: Path):
+        return PATH_OPERAND_EVALUATORS[self.name](path, *self.values)
+
+    def size(self):
+        return 1
+
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
         """
@@ -145,6 +151,12 @@ class ASTPrimary(NamedTuple):
 class ASTBinNot(NamedTuple):
     expr: Union[ASTPrimary, "ASTBinNot", "ASTBinOr"]
 
+    def evaluate(self, path: Path) -> bool:
+        return not self.expr.evaluate(path)
+    
+    def size(self) -> int:
+        return 1 + self.expr.size()
+
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
         """
@@ -163,6 +175,15 @@ class ASTBinAnd(NamedTuple):
     Represents a binary AND expression of primaries
     """
     expressions: List[Union[ASTPrimary, ASTBinNot, "ASTBinOr"]]
+
+    def evaluate(self, path: Path) -> bool:
+        if len(self.expressions) == 1:
+            return self.expressions[0].evaluate(path)
+        
+        return reduce(lambda a, b: a.evaluate(path) & b.evaluate(path), self.expressions)
+
+    def size(self) -> int:
+        return 1 + reduce(lambda a, b: a.size() + b.size())
 
     @classmethod
     def from_tokens(cls, tokens: List[Tuple[OperandTokens, str]]):
@@ -198,12 +219,12 @@ class ASTBinOr(NamedTuple):
     """
     children: List[ASTBinAnd]
 
-    def evaluate(self) -> bool:
+    def evaluate(self, path: Path) -> bool:
         """Evaluates the OR expression"""
         if len(self.children) == 1:
-            return self.children[0].evaluate()
+            return self.children[0].evaluate(path)
 
-        return reduce(lambda a, b: a.evaluate() | b.evaluate(), self.children)
+        return reduce(lambda a, b: a.evaluate(path) | b.evaluate(path), self.children)
 
     def size(self) -> int:
         """Returns the size of the tree"""
@@ -228,6 +249,7 @@ class ASTBinOr(NamedTuple):
             rv.append(ASTBinAnd.from_tokens(tokens))
 
         return cls(rv)
+
 
 
 def expr_from_tokens(tokens: List[Tuple[OperandTokens, str]]) -> Union[ASTPrimary, ASTBinNot, ASTBinOr]:
