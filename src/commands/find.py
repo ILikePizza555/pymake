@@ -6,6 +6,7 @@ from itertools import takewhile
 from getopt import getopt
 from pathlib import Path
 
+
 class SymlinkBehavior(Enum):
     NEVER_FOLLOW = "P",
     ALWAYS_FOLLOW = "L",
@@ -20,11 +21,12 @@ def determine_behavior(options: List[str]) -> SymlinkBehavior:
         except ValueError:
             continue
     
-    # Default behavior is to never follow symbolic links. 
+    # Default behavior is to never follow symbolic links.
     if rv is None:
         return SymlinkBehavior.NEVER_FOLLOW
     else:
         return rv
+
 
 @unique
 class OperandTokens(Enum):
@@ -57,8 +59,9 @@ def tokenize_operands(operand_strings: List[str]) -> List[Tuple[OperandTokens, s
             rv.append((OperandTokens.OPERAND_NAME, s[1:]))
         else:
             rv.append((OperandTokens.OPERAND_VALUE, s))
-    
+
     return rv
+
 
 def peek_token(tokens: List[Tuple[OperandTokens, str]], i: int = 0) -> OperandTokens:
     """
@@ -70,6 +73,7 @@ def peek_token(tokens: List[Tuple[OperandTokens, str]], i: int = 0) -> OperandTo
         raise ValueError("tokens is empty")
 
     return tokens[i][0]
+
 
 def eat_token(tokens: List[Tuple[OperandTokens, str]], token: OperandTokens, i: int = 0) -> str:
     """
@@ -83,20 +87,22 @@ def eat_token(tokens: List[Tuple[OperandTokens, str]], token: OperandTokens, i: 
         raise CommandParseError("find", tokens[i][1], f"Expected token {token}")
 
     return tokens.pop(i)[1]
-        
+
 
 # Maps operand names to functions that consume a path and return a Boolean
 PATH_OPERAND_EVALUATORS = {}
+
 
 def operand(name: str):
     def wrapper(func):
         if name in PATH_OPERAND_EVALUATORS:
             raise ValueError(f"{name} already defined as an operand!")
-        
-        PATH_OPERAND_EVALUATORS[name] = func
 
+        PATH_OPERAND_EVALUATORS[name] = func
+       
         return func
     return wrapper
+
 
 class ASTPrimary(NamedTuple):
     """
@@ -122,8 +128,9 @@ class ASTPrimary(NamedTuple):
 
         while tokens and tokens[0][0] == OperandTokens.OPERAND_VALUE:
             values.append(eat_token(tokens, OperandTokens.OPERAND_VALUE))
-        
+
         return cls(name, values)
+
 
 class ASTBinNot(NamedTuple):
     expr: Union[ASTPrimary, "ASTBinNot", "ASTBinOr"]
@@ -139,6 +146,7 @@ class ASTBinNot(NamedTuple):
         """
         eat_token(tokens, OperandTokens.NOT)
         return cls(expr_from_tokens(tokens))
+
 
 class ASTBinAnd(NamedTuple):
     """
@@ -161,15 +169,16 @@ class ASTBinAnd(NamedTuple):
         while tokens:
             if peek_token(tokens) == OperandTokens.AND:
                 tokens.pop(0)
-            
+
             # Additional expressions are optional and '-a' does not have to exist. So, we try to parse an expression.
             # If we encounter an exception, then it's not an expression, so we move on.
             try:
                 expr.append(expr_from_tokens(tokens))
             except Exception:
                 break
-        
+
         return cls(expr)
+
 
 class ASTBinOr(NamedTuple):
     """
@@ -196,8 +205,9 @@ class ASTBinOr(NamedTuple):
             tokens.pop(0)
 
             rv.append(ASTBinAnd.from_tokens(tokens))
-        
+
         return cls(rv)
+
 
 def expr_from_tokens(tokens: List[Tuple[OperandTokens, str]]) -> Union[ASTPrimary, ASTBinNot, ASTBinOr]:
     """
@@ -217,7 +227,8 @@ def expr_from_tokens(tokens: List[Tuple[OperandTokens, str]]) -> Union[ASTPrimar
         return ASTBinNot.from_tokens(tokens)
     else:
         return ASTPrimary.from_tokens(tokens)
-    
+
+
 def descend(path: Path) -> List[Path]:
     """
     Decends the given path. Returns a list of Paths to all files.
@@ -234,12 +245,13 @@ def descend(path: Path) -> List[Path]:
         if current_item.is_dir():
             path_stack.extend(current_item.iterdir())
         else:
-            #TODO: Add operand evaluation here
+            # TODO: Add operand evaluation here
             rv.append(current_item)
-        
+
         i += 1
-    
+
     return rv
+
 
 @command("find")
 def find(args: List[str], env: Dict[str, str], f_in: IOBase, f_out: IOBase) -> int:
@@ -247,7 +259,7 @@ def find(args: List[str], env: Dict[str, str], f_in: IOBase, f_out: IOBase) -> i
 
     # Flatten the options into a list of strings
     options: List[str] = [i[0][1:] for i in opt[0]]
-    
+
     # Set variables to control program behavior
     behavior = determine_behavior(options)
     verbose = "v" in options
