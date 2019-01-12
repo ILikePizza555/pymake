@@ -5,10 +5,10 @@ from io import IOBase
 from itertools import takewhile
 from getopt import getopt
 from pathlib import Path
-from shell_utils import shell_pattern_match
 from functools import reduce
 import sys
 import os
+import fnmatch
 
 
 class SymlinkBehavior(Enum):
@@ -112,7 +112,7 @@ def operand(name: str):
 
 @operand("name")
 def op_name(path: Path, pattern: str) -> bool:
-    return shell_pattern_match(path.name, pattern)
+    return fnmatch.fnmatch(path.name(), pattern)
 
 
 
