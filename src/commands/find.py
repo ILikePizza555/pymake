@@ -112,7 +112,7 @@ def operand(name: str):
 
 @operand("name")
 def op_name(path: Path, pattern: str) -> bool:
-    return fnmatch.fnmatch(path.name(), pattern)
+    return fnmatch.fnmatch(path.name, pattern)
 
 
 
