@@ -1,6 +1,6 @@
 import string
 import re
-from typing import List, Union
+from typing import List, Union, Set, Generator, Iterable
 
 
 def bracket_expantion(b: str) -> set:
@@ -64,7 +64,15 @@ def recursive_shell_match(input_str: str, pattern: List[Union[str, set]]) -> boo
     return False
 
 
-def shell_pattern_match(input_str: Union[str, List[str]], pattern: str) -> Union[bool, List[bool]]:
+def expand_pattern(string: str, pattern: str) -> Generator[Union[Set[str], str]]:
+    for m in re.finditer(pattern, string):
+        if len(m.group(0)) == 1:
+            yield m.group(0)
+        else:
+            yield bracket_expantion(m.group(0))
+
+
+def shell_pattern_match(input_str: Union[str, Iterable[str]], pattern: str) -> Union[bool, List[bool]]:
     """
     Matches a pattern against an input using Unix Shell Pattern matching notation.
     ? matches any character
@@ -74,9 +82,9 @@ def shell_pattern_match(input_str: Union[str, List[str]], pattern: str) -> Union
     Multiple input strings may be provided.
     """
     # Convert our input string to a list of characters and sets
-    pattern_expansion = [m.group(0) if len(m.group(0)) == 1 else bracket_expantion(m.group(0)) for m in re.finditer(r"\[.+\]|.", pattern)]
+    pattern_expansion = list(expand_pattern(pattern, r"\[.+\]|."))
 
-    if type(input_str) == str:
-        return recursive_shell_match(input_str, pattern_expansion)
-    else:
+    try:
         return [recursive_shell_match(i, pattern_expansion) for i in input_str]
+    except TypeError:
+        return recursive_shell_match(input_str, pattern_expansion)
